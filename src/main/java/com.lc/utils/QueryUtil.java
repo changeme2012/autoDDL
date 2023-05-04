@@ -36,9 +36,6 @@ public class QueryUtil {
             queryList = runner.query(connection, sql, new BeanListHandler<T>(clazz));
             return queryList;
         }
-
-
-
     }
 
     //查询单行结果 的通用方法
