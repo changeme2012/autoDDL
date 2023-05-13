@@ -2,7 +2,9 @@ package com.lc.utils;
 
 import cn.hutool.db.ds.DSFactory;
 import cn.hutool.db.ds.druid.DruidDSFactory;
+import org.apache.commons.dbutils.QueryRunner;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,6 +37,25 @@ public class DruidConnectUtil {
 
     }
 
+    //PHoenix连接
+    public static DataSource getPhoenixDataSource()  {
+
+        try {
+            return DSFactory.get("phoenix");
+        } catch (Exception e) {
+            throw new RuntimeException("获取连接失败 "+e);
+        }
+
+    }
+
+    public static MyDBHelper getPhoenixDBHelper()  {
+        try {
+          return new MyDBHelper(new QueryRunner(DSFactory.get("phoenix")));
+        } catch (Exception e) {
+            throw new RuntimeException("获取连接失败 "+e);
+        }
+    }
+
     //mysql连接
     public static Connection getMysqlConnection()  {
 
@@ -46,6 +67,23 @@ public class DruidConnectUtil {
 
     }
 
+    public static DataSource getMysqlDataSource()  {
+        try {
+            return DSFactory.get("mysql");
+        } catch (Exception e) {
+            throw new RuntimeException("获取连接失败 "+e);
+        }
+
+    }
+
+    public static MyDBHelper getMysqlDBHelper()  {
+        try {
+            return new MyDBHelper(new QueryRunner(DSFactory.get("mysql")));
+        } catch (Exception e) {
+            throw new RuntimeException("获取连接失败 "+e);
+        }
+    }
+
 
     //Clickhouse连接
     public static Connection getClickhouseConnection()  {
@@ -55,8 +93,27 @@ public class DruidConnectUtil {
         } catch (SQLException e) {
             throw new RuntimeException("获取连接失败 "+e);
         }
+    }
+
+    public static DataSource getClickhouseDataSource()  {
+
+        try {
+            return DSFactory.get("clickhouse");
+        } catch (Exception e) {
+            throw new RuntimeException("获取连接失败 "+e);
+        }
 
     }
+
+    public static MyDBHelper getClickhouseDBHelper()  {
+        try {
+            return new MyDBHelper(new QueryRunner(DSFactory.get("clickhouse")));
+        } catch (Exception e) {
+            throw new RuntimeException("获取连接失败 "+e);
+        }
+    }
+
+
 
     //关闭连接
     public static void close(ResultSet resultSet, PreparedStatement preparedStatement, Connection connection) {

@@ -1,8 +1,9 @@
 package com.lc.utils;
 
+import cn.hutool.core.collection.CollUtil;
 import com.lc.bean.tableBean;
+import com.lc.common.MyConfiguration;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,54 +19,46 @@ import java.util.stream.Collectors;
  * @Create: 2023-04-28-17:04
  */
 public class DDLUtil {
+
     public static void main(String[] args) throws SQLException {
+
 
 
 
      String filter =  "and type = 'insert' " ;
 
         divideTable("topic_db","gmall","order_detail_activity",filter);
+
+//        getResultSet("gmall","order_detail_activity");
     }
 
 
     private static final String KAFKA_SERVERS = "hadoop102:9092";
-    private static final String SCHEMA_QUERY = "SELECT table_name,column_name,data_type,column_comment,column_key \n" +
-            "FROM information_schema.COLUMNS \n" +
-            "WHERE TABLE_SCHEMA = ? and table_name = ?";
+
+
+    private static MyDBHelper dbHelper;
+
+    static {
+        dbHelper = DruidConnectUtil.getMysqlDBHelper();
+    }
 
 
 
-    public static void  getResultSet( String topic,String database,String...tables) throws SQLException {
+    public static List<tableBean>  getResultSet( String database,String table) throws SQLException {
 
-        Connection connection = DruidConnectUtil.getMysqlConnection();
-         List<tableBean> tableBeanList = null;
+        List<tableBean> tableBeanList = dbHelper.queryList(MyConfiguration.SCHEMA_QUERY, tableBean.class, true,database,table);
 
-        for (int i = 0; i < tables.length; i++) {
-
-            tableBeanList = QueryUtil.queryList(connection, SCHEMA_QUERY, tableBean.class, true, database, tables[i]);
-
-            String tableDDL = getSinkDDL(tableBeanList,"dwd_add_cart",topic);
-            System.out.println(tableDDL);
-
-            String sourceDML = getSourceDML(tableBeanList, topic, database, tables[i],"");
-            System.out.println(sourceDML);
-        }
+        return tableBeanList;
 
     }
 
-    public static void  divideTable( String topic,String database, String table,String filterSql) throws SQLException {
+    public static String  divideTable( String topic,String database, String table,String filterSql) throws SQLException {
 
-        Connection connection = DruidConnectUtil.getMysqlConnection();
+        List<tableBean> tableBeanList = dbHelper.queryList(MyConfiguration.SCHEMA_QUERY, tableBean.class, true,database,table);
 
+        String sourceDML = getColumn(tableBeanList, topic, database, table);
 
-
-        List<tableBean>  tableBeanList = QueryUtil.queryList(connection, SCHEMA_QUERY, tableBean.class, true, database, table);
-
-            String sourceDML = getSourceDML(tableBeanList, topic, database, table,filterSql);
-
-            System.out.println(sourceDML);
-
-
+        return sourceDML;
     }
 
     public static String lookUPJoin(List<tableBean> resultSetList ,String sinkTableName ,String topic){
@@ -98,11 +91,11 @@ public class DDLUtil {
 
     }
 
-    public static String getSinkDDL(List<tableBean> resultSetList ,String sinkTableName ,String topic){
+    public static String getQureyDDL(List<tableBean> resultSetList ){
 
         ArrayList<String> sqlList = new ArrayList<>();
 
-        StringBuffer sql = new StringBuffer("CREATE TABLE ");
+        StringBuffer sql = new StringBuffer("select\n");
 
         AtomicReference<String> pri = new AtomicReference<>("");
 
@@ -111,22 +104,21 @@ public class DDLUtil {
             if ("PRI".equals(tableBean.getColumnKey())){
                 pri.set(tableBean.getColumnName());
             }
-            return "`" + tableBean.getColumnName()  + "`\t" + tableBean.getDataType();
+            return "`" + tableBean.getColumnName()  ;
 
 
         }).collect(Collectors.joining(",\n"));
 
-        sql.append(sinkTableName + " (\n")
-                .append(collect)
+        sql.append(collect)
                 .append(",\n")
-                .append(  " PRIMARY KEY ( " + pri.get() + " ) NOT ENFORCED")
+//                .append(  " PRIMARY KEY ( " + pri.get() + " ) NOT ENFORCED")
                 .append("`pt`\n");
 
         sqlList.add(sql.toString());
 
-        String tableSourceSql = getTableSinkSql(topic, sqlList);
+        String join = CollUtil.join(sqlList, "");
 
-        return tableSourceSql;
+        return join;
 
     }
 
@@ -138,7 +130,7 @@ public class DDLUtil {
 
         String collect = resultSetList.stream().map(tableBean -> {
 
-            return "data[`" + tableBean.getColumnName()  + "`] " + tableBean.getColumnName();
+            return "\tdata['" + tableBean.getColumnName()  + "'] " + tableBean.getColumnName();
 
         }).collect(Collectors.joining(",\n"));
 
@@ -149,6 +141,26 @@ public class DDLUtil {
         String tableSourceSql = getDMLSql(topic, sqlList,database,table ,filterSql);
 
         return tableSourceSql;
+
+    }
+
+    public static String getColumn(List<tableBean> resultSetList ,String topic,String database ,String table){
+
+        ArrayList<String> sqlList = new ArrayList<>();
+
+        StringBuffer sql = new StringBuffer();
+
+        String collect = resultSetList.stream().map(tableBean -> {
+
+            return "\tdata['" + tableBean.getColumnName()  + "'] " + tableBean.getColumnName();
+
+        }).collect(Collectors.joining(",\n"));
+
+        sql.append(collect).append(",\n\t`pt`\n");
+
+        sqlList.add(sql.toString());
+
+       return String.join("",sqlList);
 
     }
 
