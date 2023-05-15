@@ -36,6 +36,8 @@ public class KafkaTable implements KafkaInterface {
 
     private static List<tableBean> resultList;
 
+    private static List<BackendTable> backendTableResultList;
+
     private static List<String> columnListl;
 
 
@@ -61,16 +63,24 @@ public class KafkaTable implements KafkaInterface {
 
 
     @Override
-    public void qurey() {
+    public void qurey() throws Exception {
+        if (configFactory.getSelect() == null){
+            String database = configFactory.getDatabase();
+            String table = configFactory.getTable();
 
-        String database = configFactory.getDatabase();
-        String table = configFactory.getTable();
+            try {
+                resultList = DDLUtil.getResultSet(database, table);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }{
+            String tableName = configFactory.getSelect();
 
-        try {
-            resultList = DDLUtil.getResultSet(database, table);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            backendTableResultList = dbHelper.queryList(MyConfiguration.BACKEND_TABLE_SQL, BackendTable.class, true,tableName);
+
         }
+
+
     }
 
     @Override
@@ -94,6 +104,7 @@ public class KafkaTable implements KafkaInterface {
 
     @Override
     public void spliceSQL() {
+        ArrayList<String> templList = new ArrayList<>();
 
         if (configFactory.getFilterTable() != null ){
             columnListl = resultList.stream().map(tableBean -> {
@@ -102,11 +113,16 @@ public class KafkaTable implements KafkaInterface {
 
             }).collect(Collectors.toList());
         }else if(configFactory.getSelect() != null){
-            columnListl = resultList.stream().map(tableBean -> {
+            BackendTable backendTable = backendTableResultList.get(0);
+            String[] split = backendTable.getColumns().split(",");
 
-                return "\t"+ tableBean.getColumnName();
+            for (String column : split) {
+                templList.add("\t"+column);
+            }
 
-            }).collect(Collectors.toList());
+
+
+            columnListl=templList;
         }
     }
 
@@ -197,11 +213,11 @@ public class KafkaTable implements KafkaInterface {
                     }
                 }
 
-            }
-
-            columnListl = modifiedColumnList;
-
-            return columnListl;
+                columnListl = modifiedColumnList;
+                return columnListl;
+            }{
+                return null;
+        }
 
     }
 
@@ -211,7 +227,8 @@ public class KafkaTable implements KafkaInterface {
         if (configFactory.getFilterTable() != null){
             resultsSQL =String.format(configFactory.getFilterTable(),CollUtil.join(columnListl,",\n"));
         }else if (configFactory.getSelect() != null){
-            resultsSQL = String.format(configFactory.getSelect(), CollUtil.join(columnListl, ",\n"));
+            String tableName = configFactory.getSelect();
+            resultsSQL = String.format(MyConfiguration.QUERY, CollUtil.join(columnListl, ",\n"),tableName);
         }else if (configFactory.getKafkaSinkWith() != null){
             resultsSQL = String.format(configFactory.getKafkaSinkWith(), CollUtil.join(columnListl, ",\n"));
         }else if (configFactory.getUpsertKafkaSinkWith() != null){
@@ -276,8 +293,10 @@ public class KafkaTable implements KafkaInterface {
 
             ArrayList<String> columns = new ArrayList<>();
 
-            for (String column : columnListl) {
+            for (String column : columnListl)
+            {
                 String[] split = column.split("\\s");
+
                 columns.add(split[split.length-1].trim());
             }
 
@@ -296,13 +315,13 @@ public class KafkaTable implements KafkaInterface {
     }
 
     @Override
-    public void print() {
+    public void print() throws Exception {
   /*      if (configFactory.getKafkaSourceWith() != null ){
                   create();
         }*/
-//        if (configFactory.getSelect() != null || configFactory.getFilterTable() != null){
+        if (configFactory.getSelect() != null || configFactory.getFilterTable() != null){
             qurey();
-//        }
+        }
        if (configFactory.getExclude() != null){
            exclude();
        }
@@ -310,21 +329,26 @@ public class KafkaTable implements KafkaInterface {
            include();
        }
 
-          allcolumn();
+
+//          allcolumn();
 
 
-//        spliceSQL();
-//
-//       if (configFactory.getFunction() != null){
-//           function();
-//       }
-//
-//        encapsulatedSQL();
-//
-//       if (configFactory.getSaveTableAlias() != null){
-//           save();
-//       }
+        spliceSQL();
 
-        System.out.println(columnListl);
+       if (configFactory.getFunction() != null || configFactory.getFunction().isEmpty() ){
+           function();
+       }
+
+        encapsulatedSQL();
+
+       if (configFactory.getSaveTableAlias() != null){
+           save();
+       }
+
+       if (configFactory.getSelect() != null){
+
+       }
+
+        System.out.println(resultsSQL);
     }
 }

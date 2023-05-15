@@ -168,7 +168,8 @@ public class SqlConfigFactory {
 
 
     public SqlConfigFactory select(String fromTableName) {
-        this.select = String.format(QUERY,"%s",fromTableName) ;
+//        this.select = String.format(QUERY,"%s",fromTableName) ;
+        this.select = fromTableName;
         return this;
     }
 

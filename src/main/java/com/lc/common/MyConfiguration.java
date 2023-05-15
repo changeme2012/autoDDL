@@ -32,6 +32,8 @@ public class MyConfiguration {
     public static final String GROUP_OFFSETS = "group-offsets";
     public static final String TIMESTAMP = "timestamp";
 
+    public static final String BACKEND_TABLE_SQL ="select * from "+MyConfiguration.BACKEND_TABLE+" where table_name = ? ";
+
 
     public static final String MAXWEL_SOURCE_COLUMN = " `database` STRING, \n" +
             " `table` STRING, \n" +
@@ -93,6 +95,10 @@ public class MyConfiguration {
     public static final String SCHEMA = "gmall";
 
     public static final String BACKEND_TABLE = "autoddl.backend_table";
+
+    public static final String QUERY = "SELECT \n" +
+            "%s\n" +
+            "FROM %s ";
 
 
 

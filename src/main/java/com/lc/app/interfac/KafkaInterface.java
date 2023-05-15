@@ -1,5 +1,6 @@
 package com.lc.app.interfac;
 
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -13,7 +14,7 @@ import java.util.List;
 public interface KafkaInterface {
 
 
-    void qurey ();
+    void qurey () throws Exception;
 
 //    void create ();
 
@@ -39,7 +40,7 @@ public interface KafkaInterface {
 
 
 
-    void print();
+    void print() throws Exception;
 
 
 

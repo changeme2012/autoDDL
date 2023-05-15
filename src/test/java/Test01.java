@@ -9,7 +9,7 @@ import com.lc.app.ddl.KafkaTable;
  * @Create: 2023-05-11-11:37
  */
 public class Test01 {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
 
 
@@ -44,17 +44,29 @@ public class Test01 {
         //cart_info表
         KafkaTable userInfo = KafkaTable.builder()
                 .database("gmall")
-                .table("user_info")
+                .table("cart_info")
 //                .exclude("img_url,is_checked")
-//                .filterTable("topic_db","cart_info","insert")
+                .filterTable("topic_db","cart_info","insert")
 
-//                .saveTableAlias("dwd_cart_add")
+                .saveTableAlias("dwd_cart_add")
+                .build();
+
+
+        KafkaTable cartAdd = KafkaTable.builder()
+                .database("gmall")
+                .table("cart_info")
+//                .exclude("img_url,is_checked")
+                .select("dwd_cart_add")
+
+                .saveTableAlias("dwd_cart_add")
                 .build();
 
 
 
+//        userInfo.print();
 
-        userInfo.print();
+        cartAdd.print();
+
     /*    String qurey = build.qurey();
         System.out.println(qurey);*/
     }
