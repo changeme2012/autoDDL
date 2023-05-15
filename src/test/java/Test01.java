@@ -1,5 +1,4 @@
 import com.lc.app.ddl.KafkaTable;
-import com.lc.common.Functions;
 
 /**
  * ClassName:Test01
@@ -47,13 +46,12 @@ public class Test01 {
                 .database("gmall")
                 .table("user_info")
 //                .exclude("img_url,is_checked")
-                .include("id,name")
-                .function("id",Functions.UNIX_TIMESTAMP)
-                .function("name",Functions.UNIX_TIMESTAMP)
 //                .filterTable("topic_db","cart_info","insert")
-                .select("user_info")
+
 //                .saveTableAlias("dwd_cart_add")
                 .build();
+
+
 
 
         userInfo.print();

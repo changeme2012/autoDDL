@@ -23,6 +23,8 @@ public interface KafkaInterface {
 
     void spliceSQL();
 
+    void allcolumn();
+
     List<String> function();
 
     void encapsulatedSQL();

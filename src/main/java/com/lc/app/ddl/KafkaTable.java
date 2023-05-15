@@ -73,6 +73,14 @@ public class KafkaTable implements KafkaInterface {
         }
     }
 
+    @Override
+    public void allcolumn() {
+        columnListl = new ArrayList<>();
+        for (tableBean tableBean : resultList) {
+            String columnName = tableBean.getColumnName();
+            columnListl.add(columnName);
+        }
+    }
 
     @Override
     public void exclude() {
@@ -292,9 +300,9 @@ public class KafkaTable implements KafkaInterface {
   /*      if (configFactory.getKafkaSourceWith() != null ){
                   create();
         }*/
-        if (configFactory.getSelect() != null || configFactory.getFilterTable() != null){
+//        if (configFactory.getSelect() != null || configFactory.getFilterTable() != null){
             qurey();
-        }
+//        }
        if (configFactory.getExclude() != null){
            exclude();
        }
@@ -302,17 +310,21 @@ public class KafkaTable implements KafkaInterface {
            include();
        }
 
-        spliceSQL();
+          allcolumn();
 
-       if (configFactory.getFunction() != null){
-           function();
-       }
-        encapsulatedSQL();
 
-       if (configFactory.getSaveTableAlias() != null){
-           save();
-       }
+//        spliceSQL();
+//
+//       if (configFactory.getFunction() != null){
+//           function();
+//       }
+//
+//        encapsulatedSQL();
+//
+//       if (configFactory.getSaveTableAlias() != null){
+//           save();
+//       }
 
-        System.out.println(resultsSQL);
+        System.out.println(columnListl);
     }
 }
